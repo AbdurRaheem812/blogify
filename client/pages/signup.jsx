@@ -35,10 +35,11 @@ const Signup = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+  e.preventDefault();
+  if (!validate()) return;
 
-    const res = await fetch("http://localhost:5000/api/signup", {
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),
@@ -51,7 +52,24 @@ const Signup = () => {
     } else {
       alert(data.message || "Signup failed");
     }
-  };
+  } catch (error) {
+    console.error("Backend unavailable, storing data locally:", error);
+
+    // Generate a fake token for offline use
+    const fakeToken = `offline-${Date.now()}`;
+
+    // Save user info + token to localStorage
+    const offlineUser = { username, email, password, token: fakeToken };
+    localStorage.setItem("offlineUser", JSON.stringify(offlineUser));
+
+    // Save token in your auth utility
+    setToken(fakeToken);
+
+    alert("Backend is offline. You are logged in locally.");
+    navigate("/");
+  }
+};
+
 
   return (
     <div className="container mt-5">

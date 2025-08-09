@@ -28,28 +28,38 @@ const Login = () => {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+  e.preventDefault();
+  if (!validate()) return;
 
-    try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const response = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await response.json();
-      if (response.ok) {
-        setToken(data.token);
-        navigate("/");
-      } else {
-        alert(data.message || "Login failed");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("An error occurred while logging in. Please try again.");
+    const data = await response.json();
+    if (response.ok) {
+      setToken(data.token);
+      navigate("/");
+    } else {
+      alert(data.message || "Login failed");
     }
-  };
+  } catch (error) {
+    console.error("Backend unavailable, checking local storage:", error);
+
+    // Try offline login
+    const savedUser = JSON.parse(localStorage.getItem("offlineUser"));
+    if (savedUser && savedUser.email === email && savedUser.password === password) {
+      setToken(savedUser.token);
+      alert("Logged in offline.");
+      navigate("/");
+    } else {
+      alert("Backend is offline and no matching local account found.");
+    }
+  }
+};
+
 
   return (
     <div className="container mt-5">

@@ -21,7 +21,7 @@ const Navbar = () => {
           <>
             <li className="nav-item"><Link className="nav-link" to="/new-post">New Post</Link></li>
             <li className="nav-item">
-              <button className="btn btn-outline-light ms-2" onClick={handleLogout}>Logout</button>
+              <button className="btn nav-link btn-outline-light ms-2" onClick={handleLogout}>Logout</button>
             </li>
           </>
         ) : (

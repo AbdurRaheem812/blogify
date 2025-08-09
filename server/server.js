@@ -1,7 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import authRoutes from './routes/auth.js';
-import postRoutes from './routes/post.js';
+import authRoutes from './routes/authRoutes.js';
+import postRoutes from './routes/postRoutes.js';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 dotenv.config();
