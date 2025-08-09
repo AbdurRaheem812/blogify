@@ -11,7 +11,7 @@ const postSchema = mongoose.Schema({
         type: String,
         required: true
     },  
-    authfer: {
+    author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true

@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     try {
         const posts = await Post.find()
             .populate('auther', 'username email')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 });//latest posts first 
         res.status(200).json(posts);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching posts', error });
@@ -31,12 +31,11 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 })
 
-// Get a single post by ID with populated author 
+// Get a single post by author ID   
 router.get('/:id', async (req, res) => {
     try {
         const post = await Post.findById(req.params.id)
-            .populate('auther', 'username email')
-            .populate('comments');
+            .populate('auther', 'username email');
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
