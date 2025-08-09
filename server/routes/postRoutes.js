@@ -1,86 +1,22 @@
 import express from 'express';
-import Post from '../models/post.js';
 import authMiddleware from '../middlewares/authMiddleware.js'
+import { fetchAllPosts, createNewPosts, getPostById, updatePost, deletePost } from '../controllers/post.js';
 
 const router = express.Router();
 
 // This route fetches all posts with their authors populated
-router.get('/', async (req, res) => {
-    try {
-        const posts = await Post.find()
-            .populate('auther', 'username email')
-            .sort({ createdAt: -1 });//latest posts first 
-        res.status(200).json(posts);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching posts', error });
-    }
-})
+router.get('/', fetchAllPosts);
 // Create a new post
-router.post('/', authMiddleware, async (req, res) => {
-    try {
-        const { title, content } = req.body;
-        const newPost = new Post({
-            title,
-            content,
-            author: req.user._id // Assuming req.user is set by authMiddleware
-        });
-        const savedPost = await newPost.save();
-        res.status(201).json(savedPost);
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating post', error });
-    }
-})
+router.post('/', authMiddleware, createNewPosts)
 
 // Get a single post by author ID   
-router.get('/:id', async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id)
-            .populate('auther', 'username email');
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-        res.status(200).json(post);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching post', error });
-    }
-})
+router.get('/:id', getPostById)
 
 // This route allows the author of the post to update it
-router.put('/:id',authMiddleware, async (req, res) => {
-    try {
-        const { title, content } = req.body;
-        const post = await Post.findById(req.params.id);
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-        if (post.author.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'You are not authorized to update this post' });
-        }
-        post.title = title;
-        post.content = content;
-        const updatedPost = await post.save();
-        res.status(200).json(updatedPost);
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating post', error });
-    }
-})
+router.put('/:id',authMiddleware, updatePost)
 
 // This route allows the author of the post to delete it
-router.delete('/:id',authMiddleware, async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id);
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-        if (post.author.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'You are not authorized to delete this post' });
-        }
-        await post.deleteOne();
-        res.status(200).json({ message: 'Post deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error deleting post', error });
-    }
-})
+router.delete('/:id',authMiddleware, deletePost)
 
 // Export the router
 export default router;
