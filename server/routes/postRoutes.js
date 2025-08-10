@@ -6,6 +6,7 @@ const router = express.Router();
 
 // This route fetches all posts with their authors populated
 router.get('/', fetchAllPosts);
+
 // Create a new post
 router.post('/', authMiddleware, createNewPosts)
 
