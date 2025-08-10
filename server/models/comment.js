@@ -16,6 +16,7 @@ const commentSchema = mongoose.Schema({
         ref: 'Post',
         required: true
     }
+    
 },
     { timeStamps: true });
 

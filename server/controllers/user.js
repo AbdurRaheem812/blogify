@@ -45,3 +45,4 @@ const handleLogout = async (req, res) => {
 };
 
 export { handleSignup, handleLogin, handleLogout };
+
