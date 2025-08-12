@@ -1,49 +1,43 @@
-import Comment from "../models/comment";
+// controllers/commentController.js
+import {
+    createCommentService,
+    getCommentsByPostIdService,
+    deleteCommentByIdService
+} from "../services/comment.js";
 
-
-//Crreate a new comment
+// Create new comment
 const createNewComment = async (req, res) => {
-    const { text, user } = req.body;
-    const postId = req.params.id;
     try {
-        const newComment = new Comment({
-            text,
-            user,
-            postId
+        const savedComment = await createCommentService({
+            text: req.body.text,
+            user: req.body.user,
+            postId: req.params.id
         });
-        const savedComment = await newComment.save();
         res.status(201).json(savedComment);
     } catch (error) {
-        res.status(500).json({ message: 'Error creating comment', error });
+        res.status(500).json({ message: error.message });
     }
-    }
+};
 
-
-    // Get comments by post ID
+// Get comments by post ID
 const getCommentsByPostId = async (req, res) => {
     try {
-        const postId = req.params.id;
-        const comments = await Comment.find({ postId }).populate('user', 'username');
-        res.status(200).json(comments); 
+        const comments = await getCommentsByPostIdService(req.params.id);
+        res.status(200).json(comments);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching comments', error });
+        res.status(500).json({ message: error.message });
     }
-}
+};
 
-
-// Delete a comment by ID
+// Delete comment by ID
 const deleteCommentById = async (req, res) => {
-    const { id } = req.params;
     try {
-        const deletedComment = await Comment.findByIdAndDelete(id);
-        if (!deletedComment) {
-            return res.status(404).json({ message: 'Comment not found' });
-        }
-        res.status(200).json({ message: 'Comment deleted successfully' });
+        const result = await deleteCommentByIdService(req.params.id);
+        res.status(200).json(result);
     } catch (error) {
-        res.status(500).json({ message: 'Error deleting comment', error });
+        const statusCode = error.message === 'Comment not found' ? 404 : 500;
+        res.status(statusCode).json({ message: error.message });
     }
-    }
+};
 
-    // Export the functions
 export { createNewComment, getCommentsByPostId, deleteCommentById };

@@ -1,86 +1,75 @@
-import Post from '../models/post.js';
+// controllers/postController.js
+import {
+    fetchAllPostsService,
+    createPostService,
+    getPostByIdService,
+    updatePostService,
+    deletePostService
+} from '../services/post.js';
 
-// This controller handles fetching all posts, creating a new post, getting a post by ID, updating a post, and deleting a post.
+// Fetch all posts
 const fetchAllPosts = async (req, res) => {
     try {
-        const posts = await Post.find()
-            .populate('auther', 'username email')
-            .sort({ createdAt: -1 });//latest posts first 
+        const posts = await fetchAllPostsService();
         res.status(200).json(posts);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching posts', error });
+        res.status(500).json({ message: error.message });
     }
-}
+};
 
-// This controller handles creating a new post
+// Create new post
 const createNewPost = async (req, res) => {
     try {
-        const { title, content } = req.body;
-        const newPost = new Post({
-            title,
-            content,
-            author: req.user._id // Assuming req.user is set by authMiddleware
+        const savedPost = await createPostService({
+            title: req.body.title,
+            content: req.body.content,
+            userId: req.user._id
         });
-        const savedPost = await newPost.save();
         res.status(201).json(savedPost);
     } catch (error) {
-        res.status(500).json({ message: 'Error creating post', error });
+        res.status(500).json({ message: error.message });
     }
-}
+};
 
-// This controller handles getting a post by its ID
-// It populates the author field with the author's username and email.
+// Get post by ID
 const getPostById = async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id)
-            .populate('auther', 'username email');
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
+        const post = await getPostByIdService(req.params.id);
         res.status(200).json(post);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching post', error });
+        const statusCode = error.message === 'Post not found' ? 404 : 500;
+        res.status(statusCode).json({ message: error.message });
     }
-}
+};
 
-
-// This controller handles updating a post
-// It checks if the user is the author of the post before allowing the update.
+// Update post
 const updatePost = async (req, res) => {
     try {
-        const { title, content } = req.body;
-        const post = await Post.findById(req.params.id);
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-        if (post.author.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'You are not authorized to update this post' });
-        }
-        post.title = title;
-        post.content = content;
-        const updatedPost = await post.save();
+        const updatedPost = await updatePostService({
+            postId: req.params.id,
+            title: req.body.title,
+            content: req.body.content,
+            userId: req.user._id
+        });
         res.status(200).json(updatedPost);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating post', error });
+        const statusCode = ['Post not found', 'You are not authorized to update this post'].includes(error.message) ? 403 : 500;
+        res.status(statusCode).json({ message: error.message });
     }
-}
+};
 
-// This controller handles deleting a post
-// It checks if the user is the author of the post before allowing the deletion.
+// Delete post
 const deletePost = async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-        if (post.author.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'You are not authorized to delete this post' });
-        }
-        await post.deleteOne();
-        res.status(200).json({ message: 'Post deleted successfully' });
+        const result = await deletePostService({
+            postId: req.params.id,
+            userId: req.user._id
+        });
+        res.status(200).json(result);
     } catch (error) {
-        res.status(500).json({ message: 'Error deleting post', error });
+        const statusCode = ['Post not found', 'You are not authorized to delete this post'].includes(error.message) ? 403 : 500;
+        res.status(statusCode).json({ message: error.message });
     }
-}
+};
 
 export { fetchAllPosts, createNewPost, getPostById, updatePost, deletePost };
