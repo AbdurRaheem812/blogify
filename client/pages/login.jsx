@@ -1,101 +1,60 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { setToken } from "../utils/auth";
+import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({});
-  const navigate = useNavigate();
-
-  const validate = () => {
-    const newErrors = {};
-
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-      newErrors.email = "Invalid email format";
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [message, setMessage] = useState("");
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  if (!validate()) return;
-
-  try {
-    const response = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      setToken(data.token);
-      navigate("/");
-    } else {
-      alert(data.message || "Login failed");
+    e.preventDefault();
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email, password },
+        { withCredentials: true }
+      );
+      setMessage(res.data.message);
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Login failed");
     }
-  } catch (error) {
-    console.error("Backend unavailable, checking local storage:", error);
-
-    // Try offline login
-    const savedUser = JSON.parse(localStorage.getItem("offlineUser"));
-    if (savedUser && savedUser.email === email && savedUser.password === password) {
-      setToken(savedUser.token);
-      alert("Logged in offline.");
-      navigate("/");
-    } else {
-      alert("Backend is offline and no matching local account found.");
-    }
-  }
-};
-
+  };
 
   return (
     <div className="container mt-5">
-      <h2 className="mb-4">Login</h2>
-      <form onSubmit={handleLogin} className="w-50 mx-auto">
-        <div className="mb-3">
-          <input
-            type="email"
-            className={`form-control ${errors.email ? "is-invalid" : ""}`}
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          {errors.email && (
-            <div className="invalid-feedback">{errors.email}</div>
-          )}
+      <div className="row justify-content-center">
+        <div className="col-md-4">
+          <h2 className="text-center mb-4">Login</h2>
+          <form onSubmit={handleLogin} className="border p-4 rounded shadow-sm">
+            <div className="mb-3">
+              <label className="form-label">Email address</label>
+              <input
+                type="email"
+                className="form-control"
+                placeholder="Enter email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-info w-100">
+              Login
+            </button>
+          </form>
+          {message && <p className="mt-3 text-center">{message}</p>}
         </div>
-
-        <div className="mb-3">
-          <input
-            type="password"
-            className={`form-control ${errors.password ? "is-invalid" : ""}`}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {errors.password && (
-            <div className="invalid-feedback">{errors.password}</div>
-          )}
-        </div>
-
-        <button type="submit" className="btn btn-info w-100">Login</button>
-      </form>
-      <p className="text-center mt-3">
-        Don`t have an account? <a href="/signup" className="text-decoration-none text-dark">Signup</a>
-      </p>
+      </div>
     </div>
   );
 };

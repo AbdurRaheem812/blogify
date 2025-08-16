@@ -1,48 +1,46 @@
-import { signupUser, loginUser, logoutUser } from '../services/user.js';
+import { signupUser, loginUser, verifyToken } from "../services/user.js";
 
-// Signup Controller
-const handleSignup = async (req, res) => {
+export const signup = async (req, res) => {
+    const { email, password } = req.body;
     try {
-        const userData = await signupUser(req.body);
-        return res.status(201).json(userData);
+        await signupUser(email, password);
+        res.json({ message: "Signup successful" });
     } catch (error) {
-        return res.status(400).json({ message: error.message });
+        res.status(400).json({ message: error.message });
     }
 };
 
-// Login Controller
-const handleLogin = async (req, res) => {
+export const login = async (req, res) => {
+    const { email, password } = req.body;
     try {
-        const { userData, token } = await loginUser(req.body);
+        const { token, user } = await loginUser(email, password);
 
-        // Set token in cookie
-        res.cookie('token', token, {
+        res.cookie("token", token, {
             httpOnly: true,
-            secure: false, // change to true in production
-            sameSite: 'strict',
-            maxAge: 2 * 60 * 60 * 1000
+            secure: false, // set true in production with HTTPS
+            sameSite: "strict",
+            maxAge: 15 * 60 * 1000
         });
 
-        return res.status(200).json({ message: "Login successful", user: userData });
+        res.json({ message: "Login successful", user });
     } catch (error) {
-        return res.status(400).json({ message: error.message });
+        res.status(400).json({ message: error.message });
     }
 };
 
-// Logout Controller
-const handleLogout = async (req, res) => {
+export const getMe = (req, res) => {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: "Not authenticated" });
+
     try {
-        const result = logoutUser();
-        res.clearCookie('token', {
-            httpOnly: true,
-            sameSite: 'strict',
-            secure: false
-        });
-        return res.status(200).json(result);
-    } catch (error) {
-        return res.status(400).json({ message: error.message });
+        const decoded = verifyToken(token);
+        res.json({ email: decoded.email });
+    } catch {
+        res.status(401).json({ message: "Invalid token" });
     }
 };
 
-export { handleSignup, handleLogin, handleLogout };
-
+export const logout = (req, res) => {
+    res.clearCookie("token");
+    res.json({ message: "Logged out" });
+};

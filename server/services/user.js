@@ -1,76 +1,33 @@
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import User from '../models/user.js';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-// Signup service
-const signupUser = async ({ username, email, password }) => {
-    if (!(username && email && password)) {
-        throw new Error("All fields are not filled");
+// Temporary in-memory user storage
+const users = [];
+
+export const signupUser = async (email, password) => {
+    if (users.find(u => u.email === email)) {
+        throw new Error("User already exists");
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        throw new Error("User already exists!");
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = { email, password: hashedPassword };
+    users.push(user);
 
-    // Hash password
-    const encPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = await User.create({
-        username,
-        email,
-        password: encPassword
-    });
-
-    // Generate JWT token
-    const token = jwt.sign(
-        { id: user._id, email },
-        process.env.JWT_SECRET,
-        { expiresIn: "2h" }
-    );
-
-    user.token = token;
-    await user.save();
-
-    const userData = user.toObject();
-    delete userData.password;
-
-    return userData;
+    return { email: user.email };
 };
 
-// Login service
-const loginUser = async ({ email, password }) => {
-    if (!(email && password)) {
-        throw new Error("All fields are required");
-    }
+export const loginUser = async (email, password) => {
+    const user = users.find(u => u.email === email);
+    if (!user) throw new Error("Invalid credentials");
 
-    const user = await User.findOne({ email });
-    if (!user) {
-        throw new Error("User not found. Please sign up first.");
-    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new Error("Invalid credentials");
 
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-        throw new Error("Invalid credentials");
-    }
+    const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "15m" });
 
-    const token = jwt.sign(
-        { id: user._id, email },
-        process.env.JWT_SECRET,
-        { expiresIn: "2h" }
-    );
-
-    const userData = user.toObject();
-    delete userData.password;
-
-    return { userData, token };
+    return { token, user: { email: user.email } };
 };
 
-// Logout service (if you want business logic here)
-const logoutUser = () => {
-    return { message: 'Logged out successfully' };
+export const verifyToken = (token) => {
+    return jwt.verify(token, process.env.JWT_SECRET);
 };
-
-export { signupUser, loginUser, logoutUser };

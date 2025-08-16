@@ -28,7 +28,7 @@ const getPostByIdService = async (postId) => {
     return post;
 };
 
-// Update post
+// Update post 
 const updatePostService = async ({ postId, title, content, userId }) => {
     const post = await Post.findById(postId);
     if (!post) {
@@ -55,10 +55,18 @@ const deletePostService = async ({ postId, userId }) => {
     return { message: 'Post deleted successfully' };
 };
 
+// Get posts of a specific user
+const getMyPostsService = async (userId) => {
+    return await Post.find({ author: userId })
+        .populate('author', 'username email')
+        .sort({ createdAt: -1 });
+};
+
 export {
     fetchAllPostsService,
     createPostService,
     getPostByIdService,
     updatePostService,
-    deletePostService
+    deletePostService,
+    getMyPostsService
 };

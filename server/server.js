@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -20,6 +21,14 @@ mongoose.connect(process.env.MONGO_URL)
 //Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+
+// CORS to allow frontend cookies
+app.use(cors({
+    origin: "http://localhost:3000", // React frontend
+    credentials: true
+}));
+
 
 //Routes
 app.use('/api/auth', authRoutes);

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { removeToken } from "../utils/auth";
+import { removeToken } from "../src/utils/auth.js";
 
 const Home = () => {
   const navigate = useNavigate();

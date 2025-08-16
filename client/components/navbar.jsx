@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { isAuthenticated, removeToken } from "../utils/auth";
+import { isAuthenticated, removeToken } from "../src/utils/auth.js";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Navbar = () => {

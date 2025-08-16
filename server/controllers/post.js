@@ -4,7 +4,8 @@ import {
     createPostService,
     getPostByIdService,
     updatePostService,
-    deletePostService
+    deletePostService,
+    getMyPostsService
 } from '../services/post.js';
 
 // Fetch all posts
@@ -69,7 +70,17 @@ const deletePost = async (req, res) => {
     } catch (error) {
         const statusCode = ['Post not found', 'You are not authorized to delete this post'].includes(error.message) ? 403 : 500;
         res.status(statusCode).json({ message: error.message });
+    } 
+};
+
+// Fetch posts created by the logged-in user
+const getMyPosts = async (req, res) => {
+    try {
+        const posts = await getMyPostsService(req.user._id);
+        res.status(200).json(posts);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
-export { fetchAllPosts, createNewPost, getPostById, updatePost, deletePost };
+export { fetchAllPosts, createNewPost, getPostById, updatePost, deletePost, getMyPosts };
