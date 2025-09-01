@@ -1,65 +1,156 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import api from "../src/utils/api";
 import { getToken } from "../src/utils/auth";
-import { Link } from "react-router-dom";
 
-const Profile = () => {
-  const [myPosts, setMyPosts] = useState([]);
+const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-  const fetchMyPosts = async () => {
-    try {
-      const token = getToken();
-      const res = await axios.get("http://localhost:5000/api/posts/my-posts", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMyPosts(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
-    try {
-      const token = getToken();
-      await axios.delete(`http://localhost:5000/api/posts/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchMyPosts();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const ProfilePage = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchMyPosts();
-  }, []);
+    const fetchProfile = async () => {
+      try {
+        const token = getToken();
+
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const res = await api.get("/auth/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setUser(res.data.user || null);
+        setPosts(res.data.posts || []);
+      } catch (err) {
+        setError("Failed to load profile. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+   
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-dark" role="status"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <p className="text-danger">{error}</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <p className="text-muted">No user data available.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>My Posts</h2>
-        <Link to="/new-post" className="btn btn-primary">+ New Post</Link>
+    <div className="container py-5">
+      <div className="row mb-4 align-items-center">
+        <div className="col-md-3 text-center">
+          
+        </div>
+        <div className="col-md-9">
+          <h3>{user.username}</h3>
+
+          <div className="d-flex mb-3">
+            <span className="me-4">
+              <strong>{posts.length}</strong> posts
+            </span>
+            <span className="me-4">
+              <strong>{user.followers?.length || 0}</strong> followers
+            </span>
+            <span>
+              <strong>{user.following?.length || 0}</strong> following
+            </span>
+          </div>
+
+          <button
+            className="btn btn-dark btn-sm"
+            onClick={() => navigate("/create")}
+          >
+            Create Post
+          </button>
+        </div>
       </div>
-      {myPosts.length === 0 ? (
-        <p>No posts yet.</p>
-      ) : (
-        <div className="list-group">
-          {myPosts.map(post => (
-            <div key={post._id} className="list-group-item">
-              <h4>{post.title}</h4>
-              <p>{post.content}</p>
-              <small>Posted on: {new Date(post.createdAt).toLocaleDateString()}</small>
-              <div className="mt-2">
-                <Link to={`/posts/edit/${post._id}`} className="btn btn-warning btn-sm me-2">Edit</Link>
-                <button onClick={() => handleDelete(post._id)} className="btn btn-danger btn-sm">Delete</button>
+
+      <hr />
+
+      <div className="row">
+        {posts.length === 0 ? (
+          <p className="text-center">No posts yet.</p>
+        ) : (
+          posts.map((post) => (
+            <div className="col-md-4 mb-4" key={post._id}>
+              <div className="card h-100">
+                {post.image && (
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="card-img-top"
+                    style={{
+                      height: "250px",
+                      objectFit: "cover",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => navigate(`/posts/${post._id}`)}
+                  />
+                )}
+                <div className="card-body">
+                  <h5 className="card-title">{post.title}</h5>
+                  <p className="card-text">{post.content.slice(0, 100)}...</p>
+                  <div className="text-center">
+                    <button
+                      className="btn btn-dark btn-sm me-2"
+                      onClick={() => navigate(`/edit-post/${post._id}`)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={async () => {
+                        try {
+                          const token = getToken();
+                          await api.delete(`/posts/${post._id}`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          setPosts(posts.filter((p) => p._id !== post._id));
+                        } catch (err) {
+                          console.error("Failed to delete post", err);
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 };
 
-export default Profile;
+export default ProfilePage;

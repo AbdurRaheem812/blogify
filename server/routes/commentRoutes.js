@@ -1,14 +1,16 @@
-import express from 'express';
-import { createNewComment, getCommentsByPostId, deleteCommentById } from '../controllers/commentController.js';
+import express from "express";
+import {
+    createComment,
+    getCommentsByPostId,
+    deleteCommentById,
+    toggleLikeComment
+} from "../controllers/comment.js";
 
 const router = express.Router();
 
-// Create a new comment
-router.post('/post/:id/comments', createNewComment)
-// Get comments by post ID
-router.get('/post/:id/comments', getCommentsByPostId)
-// Delete a comment by ID
-router.delete('/comments/:id', deleteCommentById)   
-    
-// Export the router
+router.post("/posts/:postId/comments", createComment);
+router.get("/posts/:postId/comments", getCommentsByPostId);
+router.delete("/comments/:commentId", deleteCommentById);
+router.post("/comments/:commentId/likes", toggleLikeComment);
+
 export default router;

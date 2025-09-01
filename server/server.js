@@ -1,39 +1,41 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import authRoutes from './routes/authRoutes.js';
-import postRoutes from './routes/postRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+import authRoutes from './routes/authRoutes.js';
+import postRoutes from './routes/postRoutes.js';
+import commentRoutes from './routes/commentRoutes.js';
+
 dotenv.config();
 
-//initialize express app
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
-
-//DB Connection
+// --- DB ---
 mongoose.connect(process.env.MONGO_URL)
-    .then(() => console.log("Mongo Connected"))
-    .catch((err) => console.log("Mongo connection error", err))
+  .then(() => console.log('Mongo Connected'))
+  .catch(err => console.error('Mongo connection error', err));
 
-
-//Middleware
+// --- Middleware ---
 app.use(express.json());
-app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); 
 
-
-// CORS to allow frontend cookies
+// CORS: allow Vite dev server and cookies
 app.use(cors({
-    origin: "http://localhost:3000", // React frontend
-    credentials: true
+  origin: CLIENT_ORIGIN,
+  credentials: true,
 }));
 
-
-//Routes
+// --- Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/comments', commentRoutes);
 
-//Server listening
-app.listen(PORT || 5000, () => { console.log(`Server is started at PORT:${PORT}`) });
-
+// --- Start ---
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

@@ -1,76 +1,57 @@
-// src/pages/EditPost.jsx
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../src/utils/api";
 
-const EditPost = () => {
-  const { id } = useParams(); // post ID from URL
-  const navigate = useNavigate();
-
+const CreatePost = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
-  const [image, setImage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [image, setImage] = useState(""); 
 
-  // Fetch existing post to prefill form
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const res = await api.get(`/posts/${id}`);
-        setTitle(res.data.title);
-        setContent(res.data.content);
-        setTags(res.data.tags?.join(", ") || "");
-        setImage(res.data.image || "");
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to fetch post:", err);
-        setLoading(false);
-      }
-    };
-    fetchPost();
-  }, [id]);
-
-  // Handle image file upload
+  const navigate = useNavigate();
+   
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result);
+        setImage(reader.result); 
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Submit updated post
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const updatedPost = {
+      const token = localStorage.getItem("token");
+
+      const newPost = {
         title,
         content,
         tags: tags ? tags.split(",").map((t) => t.trim()) : [],
-        image: image || null,
+        image: image || null, 
       };
 
-      await api.put(`/posts/${id}`, updatedPost, {
-        headers: { "Content-Type": "application/json" },
+      const res = await api.post("/posts", newPost, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      alert("Post updated successfully!");
-      navigate(`/posts/${id}`); // redirect to detail page
+      console.log("Post created:", res.data);
+      alert("Post created successfully!");
+      navigate('/profile');
     } catch (err) {
-      console.error("Error updating post:", err.response?.data || err.message);
-      alert("Failed to update post. Please try again.");
+      console.error("Error creating post:", err.response?.data || err.message);
     }
   };
 
-  if (loading) return <p className="text-center mt-5">Loading...</p>;
-
   return (
     <div className="container mt-4">
-      <h2>Edit Post</h2>
+      <h2>Create New Post</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">Title</label>
@@ -104,6 +85,7 @@ const EditPost = () => {
           />
         </div>
 
+        {/* Image picker via system file explorer */}
         <div className="mb-3">
           <label className="form-label">Upload Image</label>
           <input
@@ -111,6 +93,7 @@ const EditPost = () => {
             className="form-control"
             accept="image/*"
             onChange={handleFileChange}
+            required
           />
           {image && (
             <img
@@ -122,12 +105,12 @@ const EditPost = () => {
           )}
         </div>
 
-        <button type="submit" className="btn btn-primary">
-          Update Post
+        <button type="submit" className="btn btn-dark">
+          Create Post
         </button>
       </form>
     </div>
   );
 };
 
-export default EditPost;
+export default CreatePost;

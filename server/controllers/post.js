@@ -1,86 +1,60 @@
-// controllers/postController.js
 import {
-    fetchAllPostsService,
-    createPostService,
-    getPostByIdService,
-    updatePostService,
-    deletePostService,
-    getMyPostsService
-} from '../services/post.js';
+  getAllPostsService,
+  createPostService,
+  getPostByIdService,
+  updatePostService,
+  deletePostService,
+} from "../services/post.js"; 
 
-// Fetch all posts
-const fetchAllPosts = async (req, res) => {
-    try {
-        const posts = await fetchAllPostsService();
-        res.status(200).json(posts);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+// GET /api/posts
+export const getAllPosts = async (req, res) => {
+  try {
+    const posts = await getAllPostsService();
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Create new post
-const createNewPost = async (req, res) => {
-    try {
-        const savedPost = await createPostService({
-            title: req.body.title,
-            content: req.body.content,
-            userId: req.user._id
-        });
-        res.status(201).json(savedPost);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+// POST /api/posts
+export const createPost = async (req, res) => {
+  try {
+    const post = await createPostService(req.body, req.user._id);
+    res.status(201).json(post);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 };
 
-// Get post by ID
-const getPostById = async (req, res) => {
-    try {
-        const post = await getPostByIdService(req.params.id);
-        res.status(200).json(post);
-    } catch (error) {
-        const statusCode = error.message === 'Post not found' ? 404 : 500;
-        res.status(statusCode).json({ message: error.message });
-    }
+// GET /api/posts/:id
+export const getPostById = async (req, res) => {
+  try {
+    const post = await getPostByIdService(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Update post
-const updatePost = async (req, res) => {
-    try {
-        const updatedPost = await updatePostService({
-            postId: req.params.id,
-            title: req.body.title,
-            content: req.body.content,
-            userId: req.user._id
-        });
-        res.status(200).json(updatedPost);
-    } catch (error) {
-        const statusCode = ['Post not found', 'You are not authorized to update this post'].includes(error.message) ? 403 : 500;
-        res.status(statusCode).json({ message: error.message });
-    }
+// PUT /api/posts/:id
+export const updatePost = async (req, res) => {
+  try {
+    const updated = await updatePostService(req.params.id, req.body, req.user._id);
+    res.json(updated);
+  } catch (err) {
+    const code = err.message === "Not authorized" ? 403 : 404;
+    res.status(code).json({ message: err.message });
+  }
 };
 
-// Delete post
-const deletePost = async (req, res) => {
-    try {
-        const result = await deletePostService({
-            postId: req.params.id,
-            userId: req.user._id
-        });
-        res.status(200).json(result);
-    } catch (error) {
-        const statusCode = ['Post not found', 'You are not authorized to delete this post'].includes(error.message) ? 403 : 500;
-        res.status(statusCode).json({ message: error.message });
-    } 
+// DELETE /api/posts/:id
+export const deletePost = async (req, res) => {
+  try {
+    const deleted = await deletePostService(req.params.id, req.user._id);
+    res.json({ message: "Post deleted", post: deleted });
+  } catch (err) {
+    const code = err.message === "Not authorized" ? 403 : 404;
+    res.status(code).json({ message: err.message });
+  }
 };
-
-// Fetch posts created by the logged-in user
-const getMyPosts = async (req, res) => {
-    try {
-        const posts = await getMyPostsService(req.user._id);
-        res.status(200).json(posts);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-export { fetchAllPosts, createNewPost, getPostById, updatePost, deletePost, getMyPosts };

@@ -1,27 +1,19 @@
-import express from 'express';
-import authMiddleware from '../middlewares/authMiddleware.js'
-import { fetchAllPosts, createNewPost, getPostById, updatePost, deletePost, getMyPosts } from '../controllers/post.js';
-import { get } from 'mongoose';
+import express from "express";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import {
+  getAllPosts,
+  createPost,
+  getPostById,
+  updatePost,
+  deletePost,
+} from "../controllers/post.js";
 
 const router = express.Router();
 
-// This route fetches all posts with their authors populated
-router.get('/', fetchAllPosts);
+router.get("/", getAllPosts);
+router.post("/", authMiddleware, createPost); 
+router.get("/:id", getPostById); 
+router.put("/edit-post/:id", authMiddleware, updatePost); 
+router.delete("/:id", authMiddleware, deletePost); 
 
-// Create a new post
-router.post('/', authMiddleware, createNewPost)
-
-// Get a single post by author ID   
-router.get('/:id', getPostById)
-
-// This route allows the author of the post to update it
-router.put('/:id',authMiddleware, updatePost)
-
-// This route allows the author of the post to delete it
-router.delete('/:id',authMiddleware, deletePost)
-
-// Get all posts of the logged-in user
-router.get('/my-posts', authMiddleware, getMyPosts);
-
-// Export the router
 export default router;

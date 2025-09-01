@@ -1,72 +1,38 @@
-// services/post.js
-import Post from '../models/post.js';
+import Post from "../models/post.js";
 
-// Fetch all posts
-const fetchAllPostsService = async () => {
-    return await Post.find()
-        .populate('author', 'username email')
-        .sort({ createdAt: -1 });
+// Get all posts
+export const getAllPostsService = async () => {
+  return Post.find().populate("author", "username email").sort({ createdAt: -1 });
+};
+ 
+// Create new post
+export const createPostService = async (data, userId) => {
+  const post = new Post({ ...data, author: userId });
+  return post.save();
 };
 
-// Create a new post
-const createPostService = async ({ title, content, userId }) => {
-    const newPost = new Post({
-        title,
-        content,
-        author: userId
-    });
-    return await newPost.save();
+// Get single post
+export const getPostByIdService = async (id) => {
+  return Post.findById(id).populate("author", "username email");
 };
 
-// Get post by ID
-const getPostByIdService = async (postId) => {
-    const post = await Post.findById(postId)
-        .populate('author', 'username email');
-    if (!post) {
-        throw new Error('Post not found');
-    }
-    return post;
+// Update post (only owner)
+export const updatePostService = async (id, data, userId) => {
+  const post = await Post.findById(id);
+  if (!post) throw new Error("Post not found");
+  if (post.author.toString() !== userId.toString()) throw new Error("Not authorized");
+
+  Object.assign(post, data);
+  return post.save();
 };
 
-// Update post 
-const updatePostService = async ({ postId, title, content, userId }) => {
-    const post = await Post.findById(postId);
-    if (!post) {
-        throw new Error('Post not found');
-    }
-    if (post.author.toString() !== userId.toString()) {
-        throw new Error('You are not authorized to update this post');
-    }
-    post.title = title;
-    post.content = content;
-    return await post.save();
+// Delete post (only owner)
+export const deletePostService = async (id, userId) => {
+  const post = await Post.findById(id);
+  if (!post) throw new Error("Post not found");
+  if (post.author.toString() !== userId.toString()) throw new Error("Not authorized");
+
+  await post.deleteOne();
+  return post;
 };
 
-// Delete post
-const deletePostService = async ({ postId, userId }) => {
-    const post = await Post.findById(postId);
-    if (!post) {
-        throw new Error('Post not found');
-    }
-    if (post.author.toString() !== userId.toString()) {
-        throw new Error('You are not authorized to delete this post');
-    }
-    await post.deleteOne();
-    return { message: 'Post deleted successfully' };
-};
-
-// Get posts of a specific user
-const getMyPostsService = async (userId) => {
-    return await Post.find({ author: userId })
-        .populate('author', 'username email')
-        .sort({ createdAt: -1 });
-};
-
-export {
-    fetchAllPostsService,
-    createPostService,
-    getPostByIdService,
-    updatePostService,
-    deletePostService,
-    getMyPostsService
-};

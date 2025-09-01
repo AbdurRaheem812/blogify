@@ -1,46 +1,73 @@
-import { signupUser, loginUser, verifyToken } from "../services/user.js";
+import {
+  signupUser,
+  loginUser,
+  verifyToken,
+  getMyProfileService
+} from "../services/user.js";
+
 
 export const signup = async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        await signupUser(email, password);
-        res.json({ message: "Signup successful" });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+  try {
+    const { username, email, password } = req.body;
+    const user = await signupUser(username, email, password);
+    res.status(201).json({ user, message: "Signup successful" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 };
 
 export const login = async (req, res) => {
+  try {
     const { email, password } = req.body;
-    try {
-        const { token, user } = await loginUser(email, password);
+    const { token, user } = await loginUser(email, password);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: false, // set true in production with HTTPS
-            sameSite: "strict",
-            maxAge: 15 * 60 * 1000
-        });
+    const isProd = process.env.NODE_ENV === "production";
 
-        res.json({ message: "Login successful", user });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      maxAge: 60 * 60 * 1000,
+      path: "/",
+    });
+
+    res.json({ user, message: "Login successful", token });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 };
 
-export const getMe = (req, res) => {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: "Not authenticated" });
 
-    try {
-        const decoded = verifyToken(token);
-        res.json({ email: decoded.email });
-    } catch {
-        res.status(401).json({ message: "Invalid token" });
-    }
-};
 
 export const logout = (req, res) => {
-    res.clearCookie("token");
-    res.json({ message: "Logged out" });
+  const isProd = process.env.NODE_ENV === "production";
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd,
+    path: "/",
+  });
+  res.json({ message: "Logged out" });
+};
+
+export const getMyProfile = async (req, res) => {
+  try {
+    const result = await getMyProfileService(req.user._id);
+    res.status(200).json(result);
+  } catch (err) {
+    const statusCode = err.message === "User not found" ? 404 : 500;
+    res.status(statusCode).json({ message: err.message });
+  }
+};
+
+export const verify = async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const decoded = verifyToken(token);
+    res.status(200).json({ valid: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ valid: false, message: err.message });
+  }
 };

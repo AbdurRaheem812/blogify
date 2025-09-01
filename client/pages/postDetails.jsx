@@ -1,53 +1,83 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { getToken, isAuthenticated } from "../src/utils/auth.js";
+import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import api from "../src/utils/api";
+import Comments from "./comments"; 
 
 const PostDetail = () => {
   const { id } = useParams();
-  const [post, setPost] = useState(null);
   const navigate = useNavigate();
 
+  const [post, setPost] = useState(null);
+  const [error, setError] = useState("");
+
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/posts/${id}`);
+        const res = await api.get(`/posts/${id}`);
         setPost(res.data);
       } catch (err) {
-        console.error("Error fetching post:", err);
+        setError("Failed to load post.");
       }
     };
     fetchPost();
   }, [id]);
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-    try {
-      await axios.delete(`http://localhost:5000/api/posts/${id}`, {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
-      navigate("/posts");
-    } catch (err) {
-      console.error("Error deleting post:", err);
-    }
-  };
+  if (error) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
 
-  if (!post) return <p className="container mt-4">Loading post...</p>;
+  if (!post) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mt-4">
-      <h2>{post.title}</h2>
-      <p>{post.content}</p>
-      <small>By {post.author?.username} on {new Date(post.createdAt).toLocaleDateString()}</small>
+    <div className="container py-4">
+      <div className="card shadow-sm flex-row p-3">
+        {post.image && (
+      <img
+        src={post.image}
+        alt={post.title}
+        className="card-img-top"
+        style={{
+          height: "250px",
+          objectFit: "cover",
+          cursor: "pointer",
+          width: "30%",
+        }}
+        onClick={() => navigate(`/posts/${post._id}`)}
+      />
+    )}
 
-      {isAuthenticated() && (
-        <div className="mt-3">
-          <Link to={`/edit-post/${post._id}`} className="btn btn-warning me-2">Edit</Link>
-          <button onClick={handleDelete} className="btn btn-danger">Delete</button>
+        <div className="card-body">
+          <h5 className="card-title">{post.title || "Untitled Post"}</h5>
+          <p className="card-text">{post.caption || post.content}</p>
+
+          {post.tags && post.tags.length > 0 && (
+            <div className="mt-3">
+              {post.tags.map((tag, index) => (
+                <span key={index} className="badge bg-secondary me-2">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
+      
+    <Comments currentUser={currentUser} />
     </div>
   );
 };

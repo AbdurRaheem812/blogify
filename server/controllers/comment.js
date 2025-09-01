@@ -1,43 +1,51 @@
-// controllers/commentController.js
 import {
     createCommentService,
     getCommentsByPostIdService,
-    deleteCommentByIdService
-} from "../services/comment.js";
+    deleteCommentByIdService,
+    toggleLikeCommentService
+} from '../services/comment.js';
 
-// Create new comment
-const createNewComment = async (req, res) => {
+export const createComment = async (req, res) => {
     try {
-        const savedComment = await createCommentService({
-            text: req.body.text,
-            user: req.body.user,
-            postId: req.params.id
-        });
-        res.status(201).json(savedComment);
+        const { text } = req.body;
+        const user = req.user._id;
+        const postId = req.params.id;
+
+        const newComment = await createCommentService({ text, user, postId });
+        res.status(201).json(newComment);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
-// Get comments by post ID
-const getCommentsByPostId = async (req, res) => {
+export const getCommentsByPostId = async (req, res) => {
     try {
-        const comments = await getCommentsByPostIdService(req.params.id);
+        const postId = req.params.id;
+        const comments = await getCommentsByPostIdService(postId);
         res.status(200).json(comments);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
-// Delete comment by ID
-const deleteCommentById = async (req, res) => {
+export const deleteCommentById = async (req, res) => {
     try {
-        const result = await deleteCommentByIdService(req.params.id);
-        res.status(200).json(result);
+        const commentId = req.params.id;
+        const userId = req.user._id;
+        const deletedComment = await deleteCommentByIdService(commentId, userId);
+        res.status(200).json(deletedComment);
     } catch (error) {
-        const statusCode = error.message === 'Comment not found' ? 404 : 500;
-        res.status(statusCode).json({ message: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
-export { createNewComment, getCommentsByPostId, deleteCommentById };
+export const toggleLikeComment = async (req, res) => {
+    try {
+        const commentId = req.params.id;
+        const userId = req.user._id;
+        const updatedComment = await toggleLikeCommentService(commentId, userId);
+        res.status(200).json(updatedComment);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

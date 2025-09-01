@@ -1,59 +1,82 @@
+// src/pages/Login.jsx
 import { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { login } from "../src/utils/api";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password },
-        { withCredentials: true }
-      );
-      setMessage(res.data.message);
+      await login(formData);
+      navigate("/"); 
     } catch (err) {
-      setMessage(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Login failed. Try again.");
     }
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-4">
-          <h2 className="text-center mb-4">Login</h2>
-          <form onSubmit={handleLogin} className="border p-4 rounded shadow-sm">
-            <div className="mb-3">
-              <label className="form-label">Email address</label>
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="card shadow-sm p-4" style={{ width: "400px" }}>
+        <h3 className="text-center mb-3">Login</h3>
+        {error && <div className="alert alert-danger">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label className="form-label">Email address</label>
+            <input
+              type="email"
+              className="form-control"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">Password</label>
+            <div className="input-group">
               <input
-                type="email"
+                type={showPassword ? "text" : "password"}
                 className="form-control"
-                placeholder="Enter email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 required
               />
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
-            <div className="mb-3">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-info w-100">
-              Login
-            </button>
-          </form>
-          {message && <p className="mt-3 text-center">{message}</p>}
-        </div>
+          </div>
+
+          <button type="submit" className="btn btn-dark w-100">
+            Login
+          </button>
+        </form>
+
+        <p className="text-center mt-3 mb-0">
+          Don’t have an account?{" "}
+          <a href="/signup" className="text-decoration-none">
+            Sign Up
+          </a>
+        </p>
       </div>
     </div>
   );
