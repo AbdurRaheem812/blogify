@@ -33,7 +33,7 @@ app.use(cors({
 // --- Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
-app.use('/api/comments', commentRoutes);
+app.use('/api', commentRoutes);
 
 // --- Start ---
 app.listen(PORT, () => {

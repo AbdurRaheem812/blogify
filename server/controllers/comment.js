@@ -9,7 +9,7 @@ export const createComment = async (req, res) => {
     try {
         const { text } = req.body;
         const user = req.user._id;
-        const postId = req.params.id;
+        const postId = req.post._id;
 
         const newComment = await createCommentService({ text, user, postId });
         res.status(201).json(newComment);
@@ -20,7 +20,7 @@ export const createComment = async (req, res) => {
 
 export const getCommentsByPostId = async (req, res) => {
     try {
-        const postId = req.params.id;
+        const postId = req.post._id;
         const comments = await getCommentsByPostIdService(postId);
         res.status(200).json(comments);
     } catch (error) {
@@ -30,7 +30,7 @@ export const getCommentsByPostId = async (req, res) => {
 
 export const deleteCommentById = async (req, res) => {
     try {
-        const commentId = req.params.id;
+        const commentId = req.params._id;
         const userId = req.user._id;
         const deletedComment = await deleteCommentByIdService(commentId, userId);
         res.status(200).json(deletedComment);
@@ -41,7 +41,7 @@ export const deleteCommentById = async (req, res) => {
 
 export const toggleLikeComment = async (req, res) => {
     try {
-        const commentId = req.params.id;
+        const commentId = req.comments._id;
         const userId = req.user._id;
         const updatedComment = await toggleLikeCommentService(commentId, userId);
         res.status(200).json(updatedComment);

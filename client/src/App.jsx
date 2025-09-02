@@ -8,6 +8,7 @@ import Profile from "../pages/profile";
 import CreatePost from "../pages/createPost";
 import PostDetail from "../pages/postDetails";
 import EditPost from "../pages/editPost";
+import Comments from "../pages/comments";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/create" element={<CreatePost />} />
           <Route path="/posts/:id" element={<PostDetail />} />
           <Route path="/edit-post/:id" element={<EditPost />} />
+          <Route path="/comments/:postId" element={<Comments />} />
         </Routes>
       </div>
     </Router>

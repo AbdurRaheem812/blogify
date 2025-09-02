@@ -1,11 +1,11 @@
 import Comment from '../models/comments.js'
 
-export const createCommentService = async ({ text, user, postId }) => {
+export const createCommentService = async ({ content, user, postId }) => {
   try {
     const comment = new Comment({
-      content: text,
+      content: content,
       userId: user,
-      postId,
+      postId: postId,
     });
 
     const savedComment = await comment.save();

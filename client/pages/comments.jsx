@@ -1,23 +1,20 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import api from "../src/utils/api";
 
-const Comments = ({ currentUser }) => {
-  const { postId } = useParams(); 
+const Comments = ({ currentUser, postId }) => {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  
   useEffect(() => {
+    if (!postId) return;
+
     const fetchComments = async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/posts/${postId}/comments`, {
-          withCredentials: true,
-        });
+        const res = await api.get(`/posts/${postId}/comments`);
         setComments(res.data);
       } catch (err) {
         setError("Failed to load comments.");
@@ -29,25 +26,16 @@ const Comments = ({ currentUser }) => {
     fetchComments();
   }, [postId]);
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
 
     try {
       setSubmitting(true);
-      const token = localStorage.getItem("token");
+      const res = await api.post(`/posts/${postId}/comments`, {
+        text,
+      });
 
-      const res = await axios.post(
-        `${API_BASE_URL}/posts/${postId}/comments`,
-        { text },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        }
-      );
-
-      
       setComments([res.data, ...comments]);
       setText("");
     } catch (err) {
@@ -57,25 +45,17 @@ const Comments = ({ currentUser }) => {
     }
   };
 
-  
   const handleDelete = async (commentId) => {
     if (!window.confirm("Delete this comment?")) return;
 
     try {
-      const token = localStorage.getItem("token");
-      await api.delete(`/comments/${commentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
-
-      
+      await api.delete(`/comments/${commentId}`);
       setComments(comments.filter((c) => c._id !== commentId));
     } catch (err) {
       setError("Failed to delete comment.");
     }
   };
 
-  // Format date nicely
   const formatDate = (date) => {
     const d = new Date(date);
     return d.toLocaleString("en-US", {
@@ -85,61 +65,74 @@ const Comments = ({ currentUser }) => {
   };
 
   return (
-    <div className="comments-section">
-      <h3 className="text-lg font-semibold mb-3">Comments</h3>
+    <div className="mt-4 border rounded p-3 bg-light">
+      <h5 className="mb-3">Comments</h5>
 
+      {/* Error State */}
+      {error && <div className="alert alert-danger">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="mb-4">
-        <textarea
-          className="w-full border  p-2 mb-2"
-          placeholder="Write a comment..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          disabled={submitting}
-        />
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-4 py-2 bg-blue-600 text-dark rounded-lg "
-        >
-          {submitting ? "Posting..." : "Submit"}
-        </button>
-      </form>
-
-
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-
-
+      {/* Loading State */}
       {loading ? (
-        <p>Loading comments...</p>
-      ) : comments.length === 0 ? (
-        <p>No comments yet. Be the first to comment!</p>
+        <div className="text-center my-3">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
       ) : (
-        <ul className="space-y-3">
-          {comments.map((comment) => (
-            <li
-              key={comment._id}
-              className="border rounded-lg p-3 flex justify-between items-start"
+        <>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="mb-3">
+            <div className="mb-2">
+              <textarea
+                className="form-control"
+                rows="2"
+                placeholder="Write a comment..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                disabled={submitting}
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              className="btn btn-dark btn-sm"
+              disabled={submitting}
             >
-              <div>
-                <p className="font-medium">{comment.userId?.username}</p>
-                <p className="text-gray-700">{comment.content}</p>
-                <span className="text-xs text-gray-500">
-                  {formatDate(comment.createdAt)}
-                </span>
-              </div>
-              
-              {comment.userId?._id === currentUser?._id && (
-                <button
-                  onClick={() => handleDelete(comment._id)}
-                  className="text-red-500 hover:text-red-700 ml-2"
+              {submitting ? "Posting..." : "Submit"}
+            </button>
+          </form>
+
+          {/* Comments List */}
+          {comments.length === 0 ? (
+            <p className="text-muted">No comments yet. Be the first to comment!</p>
+          ) : (
+            <ul className="list-group">
+              {comments.map((comment) => (
+                <li
+                  key={comment._id}
+                  className="list-group-item d-flex justify-content-between align-items-start"
                 >
-                  🗑
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+                  <div>
+                    <strong>{comment.userId?.username}</strong>
+                    <p className="mb-1">{comment.text}</p>
+                    <small className="text-muted">
+                      {formatDate(comment.createdAt)}
+                    </small>
+                  </div>
+
+                  {comment.userId?._id === currentUser?._id && (
+                    <button
+                      onClick={() => handleDelete(comment._id)}
+                      className="btn btn-outline-danger btn-sm ms-2"
+                      title="Delete comment"
+                    >
+                      <i className="bi bi-trash"></i>
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
