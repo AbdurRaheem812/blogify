@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { FaTrash, FaRegHeart } from "react-icons/fa";
 import api from "../src/utils/api";
 
 const Comments = ({ currentUser, postId }) => {
@@ -8,23 +9,22 @@ const Comments = ({ currentUser, postId }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const fetchComments = useCallback(async () => {
     if (!postId) return;
-
-    const fetchComments = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get(`/posts/${postId}/comments`);
-        setComments(res.data);
-      } catch (err) {
-        setError("Failed to load comments.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchComments();
+    try {
+      setLoading(true);
+      const res = await api.get(`/posts/${postId}/comments`);
+      setComments(res.data);
+    } catch (err) {
+      setError("Failed to load comments.");
+    } finally {
+      setLoading(false);
+    }
   }, [postId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,12 +32,9 @@ const Comments = ({ currentUser, postId }) => {
 
     try {
       setSubmitting(true);
-      const res = await api.post(`/posts/${postId}/comments`, {
-        text,
-      });
-
-      setComments([res.data, ...comments]);
+      await api.post(`/posts/${postId}/comments`, { text });
       setText("");
+      await fetchComments();
     } catch (err) {
       setError("Failed to post comment.");
     } finally {
@@ -50,9 +47,18 @@ const Comments = ({ currentUser, postId }) => {
 
     try {
       await api.delete(`/comments/${commentId}`);
-      setComments(comments.filter((c) => c._id !== commentId));
+      await fetchComments(); 
     } catch (err) {
       setError("Failed to delete comment.");
+    }
+  };
+
+  const handleToggleLike = async (commentId) => {
+    try {
+      await api.post(`/comments/${commentId}/likes`);
+      await fetchComments(); 
+    } catch (err) {
+      setError("Failed to toggle like.");
     }
   };
 
@@ -68,10 +74,8 @@ const Comments = ({ currentUser, postId }) => {
     <div className="mt-4 border rounded p-3 bg-light">
       <h5 className="mb-3">Comments</h5>
 
-      {/* Error State */}
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Loading State */}
       {loading ? (
         <div className="text-center my-3">
           <div className="spinner-border text-primary" role="status">
@@ -80,7 +84,7 @@ const Comments = ({ currentUser, postId }) => {
         </div>
       ) : (
         <>
-          {/* Form */}
+
           <form onSubmit={handleSubmit} className="mb-3">
             <div className="mb-2">
               <textarea
@@ -101,9 +105,10 @@ const Comments = ({ currentUser, postId }) => {
             </button>
           </form>
 
-          {/* Comments List */}
           {comments.length === 0 ? (
-            <p className="text-muted">No comments yet. Be the first to comment!</p>
+            <p className="text-muted">
+              No comments yet. Be the first to comment!
+            </p>
           ) : (
             <ul className="list-group">
               {comments.map((comment) => (
@@ -112,20 +117,31 @@ const Comments = ({ currentUser, postId }) => {
                   className="list-group-item d-flex justify-content-between align-items-start"
                 >
                   <div>
-                    <strong>{comment.userId?.username}</strong>
+                    <strong>{comment.userId?.username || "Unknown User"}</strong>
                     <p className="mb-1">{comment.text}</p>
                     <small className="text-muted">
                       {formatDate(comment.createdAt)}
                     </small>
+                    <div className="mt-2">
+                      <button
+                        onClick={() => handleToggleLike(comment._id)}
+                        className="btn btn-outline-light btn-sm me-2 border"
+                        type="button"
+                      >
+                        <FaRegHeart className="text-danger" />{" "}
+                        {comment.likes?.length || 0}
+                      </button>
+                    </div>
                   </div>
 
                   {comment.userId?._id === currentUser?._id && (
                     <button
                       onClick={() => handleDelete(comment._id)}
-                      className="btn btn-outline-danger btn-sm ms-2"
+                      className="btn btn-outline-danger btn-sm"
                       title="Delete comment"
+                      type="button"
                     >
-                      <i className="bi bi-trash"></i>
+                      <FaTrash />
                     </button>
                   )}
                 </li>

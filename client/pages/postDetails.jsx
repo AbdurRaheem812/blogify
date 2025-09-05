@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import api from "../src/utils/api";
-import Comments from "./comments";
-import { FaRegComment } from "react-icons/fa";
+import Comments from "../components/comments";
+import { FaRegComment, FaRegHeart} from "react-icons/fa";
 
 const PostDetail = () => {
   const { id } = useParams();
@@ -45,6 +45,45 @@ const PostDetail = () => {
     );
   }
 
+// const handleToggleLike = async () => {
+//   if (!currentUser) {
+//     setError("You must be logged in to like posts.");
+//     return;
+//   }
+//   if (!post) return;
+
+//   const prevPost = { ...post };
+//   const hasLiked = post.likes?.includes(currentUser._id);
+
+  
+//   const optimisticLikes = hasLiked
+//     ? post.likes.filter((id) => id !== currentUser._id)
+//     : [...(post.like || []), currentUser._id];
+
+//   setPost({ ...post, likes: optimisticLikes });
+
+//   try {
+//     const token = localStorage.getItem("token");
+
+//     const res = await api.post(
+//       `/posts/${post._id}/like`,   
+//       {},
+//       { headers: { Authorization: `Bearer ${token}` } }
+//     );
+
+//     setPost(res.data); 
+//   } catch (err) {
+//     setPost(prevPost);
+
+//     if (err.response?.status === 401) {
+//       setError("You must be logged in to like posts.");
+//     } else {
+//       setError("Failed to update like. Please try again.");
+//     }
+//   }
+// };
+
+
   return (
     <div className="container py-4">
       <div className="card shadow-sm flex-row p-3">
@@ -78,6 +117,15 @@ const PostDetail = () => {
           )}
         </div>
       </div>
+      {/* <FaRegHeart
+        size={24}
+        style={{
+          cursor: "pointer",
+          marginRight: "10px",
+          color: post.like?.includes(currentUser._id) ? "red" : "black",
+        }}
+        onClick={handleToggleLike}
+      /> */}
       <FaRegComment
         size={24}
         style={{ cursor: "pointer" }}

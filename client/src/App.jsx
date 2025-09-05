@@ -8,7 +8,7 @@ import Profile from "../pages/profile";
 import CreatePost from "../pages/createPost";
 import PostDetail from "../pages/postDetails";
 import EditPost from "../pages/editPost";
-import Comments from "../pages/comments";
+import Comments from "../components/comments";
 
 function App() {
   return (

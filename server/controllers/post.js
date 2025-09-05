@@ -4,7 +4,8 @@ import {
   getPostByIdService,
   updatePostService,
   deletePostService,
-} from "../services/post.js"; 
+  toggleLikePostService
+} from "../services/post.js";  
 
 // GET /api/posts
 export const getAllPosts = async (req, res) => {
@@ -56,5 +57,16 @@ export const deletePost = async (req, res) => {
   } catch (err) {
     const code = err.message === "Not authorized" ? 403 : 404;
     res.status(code).json({ message: err.message });
+  }
+};
+
+// Toggle like on post
+export const toggleLikePost = async (req, res) => {
+  try {
+    const updated = await toggleLikePostService(req.params.id, req.user._id);
+    if (!updated) return res.status(404).json({ message: "Post not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

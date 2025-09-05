@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../src/utils/api";
 import { getToken } from "../src/utils/auth";
+import { FaTrash } from "react-icons/fa";
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
@@ -63,6 +64,7 @@ const ProfilePage = () => {
       </div>
     );
   }
+
 
   return (
     <div className="container py-5">
@@ -140,7 +142,7 @@ const ProfilePage = () => {
                         }
                       }}
                     >
-                      Delete
+                     <FaTrash />
                     </button>
                   </div>
                 </div>

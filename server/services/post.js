@@ -15,7 +15,7 @@ export const createPostService = async (data, userId) => {
 export const getPostByIdService = async (id) => {
   return Post.findById(id).populate("author", "username email");
 };
-
+ 
 // Update post (only owner)
 export const updatePostService = async (id, data, userId) => {
   const post = await Post.findById(id);
@@ -36,3 +36,17 @@ export const deletePostService = async (id, userId) => {
   return post;
 };
 
+//Toggle like
+export const toggleLikePostService = async (id, userId) => {
+  const post = await Post.findById(id);
+  if (!post) return null;
+  
+  if (post.likes.includes(userId)) {
+    post.likes.pull(userId);
+  } else {
+    post.likes.push(userId);
+  }
+
+  await post.save();
+  return post;
+};
